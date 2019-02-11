@@ -3,7 +3,7 @@
 Plugin Name: Inclusive Parents
 Description: Allow draft, private, scheduled, and password-protected pages to be selected as parents and added to menus.
 Author: sillybean
-Version: 1.1
+Version: 1.2pl+git
 Author URI: http://stephanieleary.com
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,10 +68,17 @@ add_filter( 'list_pages', 'scl_page_parent_dropdown_status_label', 10, 2 );
  * @param object $page
  * @return string $title
  */
-function scl_menu_checklist_status_label( $title, $page_id ) {
+function scl_menu_checklist_status_label( $title, $page_id = null ) {
 	if ( empty( $page_id ) )
 		return $title;
-		
+
+	if ( ! function_exists( "get_current_screen" ) )
+		return $title;
+
+	if ( ! isset( get_current_screen()->base ) ) {
+		return $title;
+	}
+
 	if ( is_admin() && 'nav-menus' == get_current_screen()->base ) {	
 		$post_status = get_post_status( $page_id );
 		if ( $post_status !== __( 'publish' ) ) {
@@ -91,7 +98,7 @@ add_filter( 'the_title', 'scl_menu_checklist_status_label', 10, 2 );
  * @return object $query
  */
 function scl_menu_screen_add_private_pages( $query ) {
-	if ( is_admin() && 'nav-menus' == get_current_screen()->base ) {
+	if ( is_admin() && $query->is_main_query() && 'nav-menus' == get_current_screen()->base ) {
 		$query->set( 'post_status', array( 'publish', 'private', 'password' ) );
 	}	
 	return $query;
